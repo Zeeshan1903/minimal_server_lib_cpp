@@ -116,6 +116,79 @@ public:
         send(client, response_str.c_str(), response_str.length(), 0);
     }
 
+
+
+
+    void extract_post_body(HttpRequest& request, istringstream& iss) {
+        string line;
+
+        // here our goal for now is only extractign the content type so in future we can use this concept 
+        // and can implement how to parse body as well which we have implemented 
+        while (getline(iss, line)) {
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+            if (line.empty()) break; 
+
+            size_t pos = line.find(':');
+            if (pos != string::npos) {
+                string key = line.substr(0, pos);
+                string val = line.substr(pos + 1);
+                if (!val.empty() && val[0] == ' ') val.erase(0, 1); 
+                if (key == "Content-Type") {
+                    request.header["Content-Type"] = val;
+                }
+            }
+        }
+
+        string body;
+        getline(iss, body, '\0');
+        request.body = body;
+    }
+
+    // This was the extraction of first line of the query if the request if get and if we want to extract all the query parameter
+
+    void extract_query(string query, HttpRequest& request){
+        //my query will look like ==> /<path>?<query> 
+        istringstream iss(query);
+
+        vector<string> result;
+        string token;
+        while(getline(iss,token, '?')){
+            result.push_back(token);
+        }
+
+        if(result.empty()){
+            cerr << "Invalid request while parsing\n";
+            return;
+        }
+        // now first line of result will contain path
+        request.path = result.front();
+        result.pop_back();
+
+        //now other parameter would be my what query praameter
+        token = result.front();
+        result.clear();
+        istringstream iss_token(token);
+        token = "";
+        while(getline(iss_token, token, '&')){
+            //here each token would be of type a=b and now we have to add this entry to map of request 
+            string a,b;
+            vector<string> temp;
+            istringstream isss(token);
+            while(getline(isss,a,'=')){
+                temp.push_back(a);
+            }
+            a = temp.front(), b = temp.back();
+            request.query[a] = b;                       // this is i have added the query to my map
+        }
+
+        return;
+
+    }
+
+
+
+
+
     HttpRequest parseRequest(const string& raw_request) {
         // HttpRequest request;
         // istringstream stream(raw_request);
@@ -166,52 +239,19 @@ public:
 
         //now ill write a fn to extract path and query_parameter
         if(request.method == "GET")extract_query(query_line, request);
-        
+        else if(request.method == "POST"){
+            //well do something here 
+            request.path = query_line;          //here this line will now only contains our path
 
+            //get body
+            extract_post_body(request, iss);                //used for extracting the body of the poist request 
+
+        }
+
+        cout << "Request type --> " << request.method << "\nRequest path --> " << request.path << "\nrequest boyd --> " << request.body << endl;
+        return request;
     }
 };
-
-
-// This was the extraction of first line of the query if the request if get and if we want to extract all the query parameter
-
-void extract_query(string query, HttpRequest& request){
-    //my query will look like ==> /<path>?<query> 
-    istringstream iss(query);
-
-    vector<string> result;
-    string token;
-    while(getline(iss,token, '?')){
-        result.push_back(token);
-    }
-
-    if(result.empty()){
-        cerr << "Invalid request while parsing\n";
-        return;
-    }
-    // now first line of result will contain path
-    request.path = result.front();
-    result.pop_back();
-
-    //now other parameter would be my what query praameter
-    token = result.front();
-    result.clear();
-    istringstream iss(token);
-    token = "";
-    while(getline(iss, token, '&')){
-        //here each token would be of type a=b and now we have to add this entry to map of request 
-        string a,b;
-        vector<string> temp;
-        istringstream isss(token);
-        while(getline(isss,a,'=')){
-            temp.push_back(a);
-        }
-        a = temp.front(), b = temp.back();
-        request.query[a] = b;                       // this is i have added the query to my map
-    }
-
-    return;
-
-}
 
 int main() {
     cout << "=== Testing Stage 3: HTTP Server ===\n" << endl;
