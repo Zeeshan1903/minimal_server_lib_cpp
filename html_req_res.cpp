@@ -1,7 +1,5 @@
 #include "html_req_res.h"
 
-// Implementations of HttpRequest and HttpResponse
-
 HttpRequest::HttpRequest() {
     path = "";
     method = "";
@@ -15,6 +13,9 @@ void HttpRequest::print() {
 
     for (auto &i : header) {
         cout << i.first << " : " << i.second << endl;
+    }
+    for(auto& i: query){
+        cout << i.first << " " << i.second << endl;
     }
 }
 

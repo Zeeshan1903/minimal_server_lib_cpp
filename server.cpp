@@ -33,6 +33,8 @@ public:
         }
     }
 
+    //this is actually intertesitng befcause as we know how would i tell this so i use golang approach which do what is add a handler or register handler 
+    //for like kind of callbackn= and call this whenever a req is made to that route    
     void addRoute(string path, function<void(HttpRequest&, HttpResponse&)> handler) {
         routes[path] = handler;
         cout << "Path added " << path << endl;
@@ -45,15 +47,16 @@ public:
         int opt = 1;
         setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt));
 
+        // now here we have to made a struct format!!! of how socket programming works in cpp/c 
         struct sockaddr_in server_info;
         server_info.sin_addr.s_addr = INADDR_ANY;
         server_info.sin_family = AF_INET;
         server_info.sin_port = htons(port);
 
-        if (bind(server_socket, (struct sockaddr*)&server_info, sizeof(server_info)) < 0) {
-            perror("Bind failed");
-            return false;
-        }
+        bind(server_socket, (struct sockaddr*)&server_info, sizeof(server_info)) ;
+            // perror("Bind failed");
+            // return false;
+        // }
 
         if (listen(server_socket, 10) < 0) {
             perror("Listen failed");
@@ -88,6 +91,7 @@ public:
         }
     }
 
+        //just here handling allt eh clinet 
     void handleClient(int client) {
         char buffer[5000];
         int bytes = recv(client, buffer, sizeof(buffer) - 1, 0);
@@ -113,18 +117,101 @@ public:
     }
 
     HttpRequest parseRequest(const string& raw_request) {
-        HttpRequest request;
-        istringstream stream(raw_request);
-        string line;
+        // HttpRequest request;
+        // istringstream stream(raw_request);
+        // string line;
 
-        if (getline(stream, line)) {
-            istringstream first_line(line);
-            string version;
-            first_line >> request.method >> request.path >> version;
-        }
-        return request;
+        // if (getline(stream, line)) {
+        //     istringstream first_line(line);
+        //     string version;
+        //     first_line >> request.method >> request.path >> version;
+        //     // cout << first_line << "\n";
+        
+        // }
+        // cout << "Here in parse request function and i don't even know wtf this function do\n";
+        // return request;
+
+
+        /*
+        POST /submit HTTP/1.1\r\n
+                Host: localhost:8080\r\n
+                Content-Type: application/x-www-form-urlencoded\r\n
+                Content-Length: 18\r\n
+                \r\n
+                name=zeeshan&age=21
+
+        GET /index.html?name=zeeshan&age=21 HTTP/1.1\r\n
+                Host: localhost:8080\r\n
+                User-Agent: curl/7.68.0\r\n
+                Accept: */
+                // \r\n
+        
+
+
+
+
+     
+
+        HttpRequest request;
+        istringstream iss(raw_request);                //this would kind of contain the whole string 
+
+        // now extract first_line
+        string first_line;
+        //now i got first line and this will contain my what query parameters and my path and tyupe
+        getline(iss, first_line, '\n');
+
+        istringstream extract_first_iss(first_line);
+        string query_line;
+        extract_first_iss >> request.method >> query_line;
+
+        //now ill write a fn to extract path and query_parameter
+        if(request.method == "GET")extract_query(query_line, request);
+        
+
     }
 };
+
+
+// This was the extraction of first line of the query if the request if get and if we want to extract all the query parameter
+
+void extract_query(string query, HttpRequest& request){
+    //my query will look like ==> /<path>?<query> 
+    istringstream iss(query);
+
+    vector<string> result;
+    string token;
+    while(getline(iss,token, '?')){
+        result.push_back(token);
+    }
+
+    if(result.empty()){
+        cerr << "Invalid request while parsing\n";
+        return;
+    }
+    // now first line of result will contain path
+    request.path = result.front();
+    result.pop_back();
+
+    //now other parameter would be my what query praameter
+    token = result.front();
+    result.clear();
+    istringstream iss(token);
+    token = "";
+    while(getline(iss, token, '&')){
+        //here each token would be of type a=b and now we have to add this entry to map of request 
+        string a,b;
+        vector<string> temp;
+        istringstream isss(token);
+        while(getline(isss,a,'=')){
+            temp.push_back(a);
+        }
+        a = temp.front(), b = temp.back();
+        request.query[a] = b;                       // this is i have added the query to my map
+    }
+
+    return;
+
+}
 
 int main() {
     cout << "=== Testing Stage 3: HTTP Server ===\n" << endl;

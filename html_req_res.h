@@ -4,10 +4,9 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-// Generic variadic print function
 template<typename... Args>
 void output(const Args&... args) {
-    (cout << ... << args);  // left fold with << operator
+    (cout << ... << args); 
 }
 
 /*
@@ -18,7 +17,8 @@ struct HttpRequest {
     string path;
     string method;
     map<string,string> header;
-    string body;   // for POST/PUT requests
+    map<string,string> query;
+    string body;   
 
     HttpRequest();
 
