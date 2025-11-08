@@ -190,21 +190,7 @@ public:
 
 
     HttpRequest parseRequest(const string& raw_request) {
-        // HttpRequest request;
-        // istringstream stream(raw_request);
-        // string line;
-
-        // if (getline(stream, line)) {
-        //     istringstream first_line(line);
-        //     string version;
-        //     first_line >> request.method >> request.path >> version;
-        //     // cout << first_line << "\n";
-        
-        // }
-        // cout << "Here in parse request function and i don't even know wtf this function do\n";
-        // return request;
-
-
+  
         /*
         POST /submit HTTP/1.1\r\n
                 Host: localhost:8080\r\n
