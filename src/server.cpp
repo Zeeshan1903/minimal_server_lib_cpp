@@ -41,7 +41,7 @@ public:
     }
 
     bool start() {
-        cout << "Starting server boom....\n";
+        cout << "Starting server ....\n";
 
         server_socket = socket(AF_INET, SOCK_STREAM, 0);
         int opt = 1;
